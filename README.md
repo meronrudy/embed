@@ -1,16 +1,29 @@
-# Embeddable Hypergraph SNN — Core + TUI (Zero-dependency core)
+# Embeddable Hypergraph SNN — Core + Core-Plus + TUI
 
 This workspace contains:
 - snn-core: zero-dependency, embeddable spiking neural network (SNN) runtime with hypergraph connectivity and an O(1) time-wheel event queue.
-- snn-tui: researcher-friendly terminal UI (ratatui + crossterm) that renders a 2D spike raster (time on X, neuron IDs on Y) and controls to step or run the simulation.
-
-Architecture is designed for portability (desktop/WASM/embedded), auditability, and extensibility to richer SNN backends without changing the TUI.
+- snn-core-plus: extensions that compose snn-core (no changes to snn-core) adding:
+  - source→edges adjacency (performance)
+  - budgeted stepping (deterministic-per-tick work caps)
+  - optional plasticity (Quantized STDP) behind a feature flag
+- snn-tui: researcher-friendly terminal UI (ratatui + crossterm) that renders a 2D spike raster and controls to step/run, now integrated with snn-core-plus.
 
 Quick start
 - Build workspace:
   - cargo build --workspace
 - Run TUI (2D raster, controls [s] step, [r] run/pause, [q] quit):
   - cargo run -p snn-tui
+
+Optional runtime budgets and plasticity (TUI)
+- Budgets can be adjusted at runtime via keys:
+  - +/- to change max edge visits per tick
+  - [ / ] to change max spikes scheduled per tick
+- Initialize budgets via environment variables:
+  - SNN_TUI_BUDGET_EDGES=100
+  - SNN_TUI_BUDGET_SPIKES=200
+- Plasticity can be toggled at runtime with p (if compiled with “plasticity”) and can also be enabled at startup:
+  - Compile feature: cargo run -p snn-tui --features plasticity
+  - Enable on launch: SNN_TUI_PLASTICITY=1 cargo run -p snn-tui --features plasticity
 
 Repository layout
 - [Cargo.toml](Cargo.toml)
@@ -25,7 +38,12 @@ Repository layout
     - Neuron model (simple I&F): [snn-core/src/neuron.rs](snn-core/src/neuron.rs)
     - Hypergraph edges: [snn-core/src/hypergraph.rs](snn-core/src/hypergraph.rs)
     - Runtime engine: [snn-core/src/runtime.rs](snn-core/src/runtime.rs)
-- snn-tui (researcher-focused TUI)
+- snn-core-plus (composed extensions)
+  - [snn-core-plus/Cargo.toml](snn-core-plus/Cargo.toml)
+  - [snn-core-plus/src/lib.rs](snn-core-plus/src/lib.rs)
+  - Extended runtime: [snn-core-plus/src/runtime_plus.rs](snn-core-plus/src/runtime_plus.rs)
+  - Plasticity (feature-gated): [snn-core-plus/src/plasticity.rs](snn-core-plus/src/plasticity.rs)
+- snn-tui (researcher-focused TUI using snn-core-plus)
   - [snn-tui/Cargo.toml](snn-tui/Cargo.toml)
   - [snn-tui/src/backend.rs](snn-tui/src/backend.rs)
   - [snn-tui/src/app.rs](snn-tui/src/app.rs)

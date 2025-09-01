@@ -1,6 +1,6 @@
 # Usage Guide
 
-This guide covers how to build/run the workspace, use the zero-dependency core programmatically, and understand the TUI’s behavior and controls.
+This guide covers how to build/run the workspace, use the zero-dependency core programmatically, and understand the TUI’s behavior and controls. It also explains the snn-core-plus integration used by the TUI for adjacency, budgets, and optional plasticity.
 
 Contents
 - Build and run
@@ -15,6 +15,17 @@ Build and run
   - cargo build --workspace
 - Run the TUI (2D raster plot of spikes):
   - cargo run -p snn-tui
+
+TUI runtime features (via snn-core-plus)
+- Budgets: limit per-tick work deterministically
+  - Keys: +/- to change max edge visits; [ / ] to change max scheduled spikes
+  - Environment variables at launch:
+    - SNN_TUI_BUDGET_EDGES=100
+    - SNN_TUI_BUDGET_SPIKES=200
+- Plasticity (Quantized STDP), feature-gated:
+  - Build feature: cargo run -p snn-tui --features plasticity
+  - Toggle at runtime with p
+  - Enable by default at launch: SNN_TUI_PLASTICITY=1 cargo run -p snn-tui --features plasticity
 
 TUI usage
 - Controls in the TUI:
@@ -35,6 +46,8 @@ Where to adjust TUI settings
 
 Programmatic core usage
 The core is designed to be used as a library (zero dependencies). Typical flow:
+
+Note: The TUI uses snn-core-plus SnnRuntimePlus which composes snn-core to add adjacency, budgets, and optional plasticity while keeping snn-core unchanged.
 
 - Create a runtime with a time wheel dimension large enough to cover your maximum synaptic delay:
   - [Rust.fn SnnRuntime::new()](../snn-core/src/runtime.rs:12)

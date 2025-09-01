@@ -52,12 +52,21 @@ pub fn draw<B: SnnBackend>(
             .style(Style::default().fg(Color::White));
         f.render_widget(raster_widget, chunks[0]);
 
-        // Status and controls
+        // Status and controls with budgets/plasticity info
+        let budgets = app.budgets.unwrap_or(snn_core_plus::StepBudgets { max_edge_visits: None, max_spikes_scheduled: None });
+        let bev = budgets.max_edge_visits.map(|v| v.to_string()).unwrap_or("-".to_string());
+        let bss = budgets.max_spikes_scheduled.map(|v| v.to_string()).unwrap_or("-".to_string());
+        #[cfg(feature = "plasticity")]
+        let plast = if app.plast_on { "on" } else { "off" };
+        #[cfg(not(feature = "plasticity"))]
+        let plast = "n/a";
+
         let status = format!(
-            "Tick: {} | Neurons: {} | Running: {} | Controls: [s] Step  [r] Run/Pause  [q] Quit",
+            "Tick: {} | Neurons: {} | Running: {} | Budgets: edges={} spikes={} | Plasticity: {} | Controls: [s] Step  [r] Run/Pause  [+/-] edges  [[]/] spikes  [p] plast  [q] Quit",
             app.tick,
             app.backend.neurons(),
-            if app.running { "yes" } else { "no" }
+            if app.running { "yes" } else { "no" },
+            bev, bss, plast
         );
         let status_widget = Paragraph::new(status)
             .style(Style::default().fg(Color::Cyan))

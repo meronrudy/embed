@@ -2,6 +2,7 @@
 
 use snn_core::SpikeEvent;
 use crate::backend::SnnBackend;
+use snn_core_plus::StepBudgets;
 
 pub struct App<B: SnnBackend> {
     pub backend: B,
@@ -9,6 +10,9 @@ pub struct App<B: SnnBackend> {
     pub width: usize,             // number of columns (time window)
     pub raster: Vec<Vec<char>>,   // [neuron][col]
     pub running: bool,
+    pub budgets: Option<StepBudgets>,
+    #[cfg(feature = "plasticity")]
+    pub plast_on: bool,
 }
 
 impl<B: SnnBackend> App<B> {
@@ -20,11 +24,20 @@ impl<B: SnnBackend> App<B> {
             width,
             raster: vec![vec![' '; width]; n],
             running: false,
+            budgets: None,
+            #[cfg(feature = "plasticity")]
+            plast_on: false,
         }
     }
 
     pub fn toggle_running(&mut self) {
         self.running = !self.running;
+    }
+
+    /// Configure budgets (also pushes into backend)
+    pub fn set_budgets(&mut self, budgets: Option<StepBudgets>) {
+        self.budgets = budgets;
+        self.backend.set_budgets(self.budgets);
     }
 
     /// Advance simulation by one tick and update the raster for the current column.

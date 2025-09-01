@@ -1,0 +1,20 @@
+[package]
+name = "snn-core-plus"
+version = "0.1.0"
+edition = "2021"
+description = "Extended runtime for snn-core with adjacency, budgets, and optional plasticity (keeps snn-core unchanged)"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "snn_core_plus"
+path = "src/lib.rs"
+
+[dependencies]
+# Depend on the minimal zero-dep core for TimeWheel/SpikeEvent/HyperEdge interop
+snn-core = { path = "../snn-core" }
+
+[features]
+# Optional learning rules
+plasticity = []
+# Placeholder feature for future partitioning
+partitioning = []

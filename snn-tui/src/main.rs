@@ -9,6 +9,7 @@ use anyhow::Result;
 use backend::CoreBackend;
 use app::App;
 use ui::draw;
+use snn_core_plus::StepBudgets;
 
 use std::io;
 use std::time::{Duration, Instant};
@@ -44,8 +45,32 @@ fn main() -> Result<()> {
     }));
 
     // App state
-    let backend = CoreBackend::new();
+    let mut backend = CoreBackend::new();
+
+    // Optionally enable plasticity at startup when feature is compiled and env var is set
+    #[cfg(feature = "plasticity")]
+    {
+        if std::env::var("SNN_TUI_PLASTICITY").ok().as_deref() == Some("1") {
+            backend.enable_default_plasticity();
+        }
+    }
+
     let mut app = App::new(backend, 80); // raster width (columns)
+    // Initialize budgets from env if provided, else None (unbounded)
+    let mut budgets: Option<StepBudgets> = None;
+    if let Ok(v) = std::env::var("SNN_TUI_BUDGET_EDGES") {
+        if let Ok(edges) = v.parse::<usize>() {
+            budgets.get_or_insert(StepBudgets { max_edge_visits: None, max_spikes_scheduled: None }).max_edge_visits = Some(edges);
+        }
+    }
+    if let Ok(v) = std::env::var("SNN_TUI_BUDGET_SPIKES") {
+        if let Ok(spikes) = v.parse::<usize>() {
+            budgets.get_or_insert(StepBudgets { max_edge_visits: None, max_spikes_scheduled: None }).max_spikes_scheduled = Some(spikes);
+        }
+    }
+    app.set_budgets(budgets);
+    #[cfg(feature = "plasticity")]
+    { app.plast_on = std::env::var("SNN_TUI_PLASTICITY").ok().as_deref() == Some("1"); }
     let tick_rate = Duration::from_millis(100);
     let mut last_tick = Instant::now();
 
@@ -63,6 +88,41 @@ fn main() -> Result<()> {
                     KeyCode::Char('q') => break,
                     KeyCode::Char('s') => app.step(),
                     KeyCode::Char('r') => app.toggle_running(),
+                    // budgets: +/- adjust max_edge_visits, [/] adjust max_spikes
+                    KeyCode::Char('+') => {
+                        let mut b = app.budgets.unwrap_or(StepBudgets { max_edge_visits: Some(0), max_spikes_scheduled: None });
+                        let cur = b.max_edge_visits.unwrap_or(0);
+                        b.max_edge_visits = Some(cur.saturating_add(10));
+                        app.set_budgets(Some(b));
+                    }
+                    KeyCode::Char('-') => {
+                        let mut b = app.budgets.unwrap_or(StepBudgets { max_edge_visits: Some(0), max_spikes_scheduled: None });
+                        let cur = b.max_edge_visits.unwrap_or(0);
+                        b.max_edge_visits = Some(cur.saturating_sub(10));
+                        app.set_budgets(Some(b));
+                    }
+                    KeyCode::Char('[') => {
+                        let mut b = app.budgets.unwrap_or(StepBudgets { max_edge_visits: None, max_spikes_scheduled: Some(0) });
+                        let cur = b.max_spikes_scheduled.unwrap_or(0);
+                        b.max_spikes_scheduled = Some(cur.saturating_add(10));
+                        app.set_budgets(Some(b));
+                    }
+                    KeyCode::Char(']') => {
+                        let mut b = app.budgets.unwrap_or(StepBudgets { max_edge_visits: None, max_spikes_scheduled: Some(0) });
+                        let cur = b.max_spikes_scheduled.unwrap_or(0);
+                        b.max_spikes_scheduled = Some(cur.saturating_sub(10));
+                        app.set_budgets(Some(b));
+                    }
+                    // toggle plasticity (if compiled)
+                    #[cfg(feature = "plasticity")]
+                    KeyCode::Char('p') => {
+                        if !app.plast_on {
+                            app.backend.enable_default_plasticity();
+                            app.plast_on = true;
+                        } else {
+                            // one-way enable in this minimal example; disable path could be added by resetting backend
+                        }
+                    }
                     _ => {}
                 }
             }

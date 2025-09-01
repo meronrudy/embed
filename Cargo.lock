@@ -372,6 +372,13 @@ name = "snn-core"
 version = "0.1.0"
 
 [[package]]
+name = "snn-core-plus"
+version = "0.1.0"
+dependencies = [
+ "snn-core",
+]
+
+[[package]]
 name = "snn-tui"
 version = "0.1.0"
 dependencies = [
@@ -379,6 +386,7 @@ dependencies = [
  "crossterm 0.28.1",
  "ratatui",
  "snn-core",
+ "snn-core-plus",
 ]
 
 [[package]]
