@@ -1,0 +1,12 @@
+[package]
+name = "snn-core"
+version = "0.1.0"
+edition = "2021"
+description = "Zero-dependency hypergraph-based SNN runtime (embeddable)"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "snn_core"
+path = "src/lib.rs"
+
+[dependencies]

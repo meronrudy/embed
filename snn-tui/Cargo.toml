@@ -1,0 +1,13 @@
+[package]
+name = "snn-tui"
+version = "0.1.0"
+edition = "2021"
+description = "Researcher-friendly TUI for snn-core with 2D spike raster"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+crossterm = "0.28"
+ratatui = "0.27"
+anyhow = "1.0"
+
+snn-core = { path = "../snn-core" }
