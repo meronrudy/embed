@@ -12,9 +12,19 @@ path = "src/lib.rs"
 [dependencies]
 # Depend on the minimal zero-dep core for TimeWheel/SpikeEvent/HyperEdge interop
 snn-core = { path = "../snn-core" }
+# Optional for embedded/no_std data structures
+heapless = { version = "0.8", optional = true }
 
 [features]
+# Use std by default; disable to build in no_std mode
+default = ["std"]
+std = []
+
 # Optional learning rules
 plasticity = []
+
 # Placeholder feature for future partitioning
 partitioning = []
+
+# Embedded mode: enables heapless-based structures and RTIC scaffolding
+embedded = ["dep:heapless"]
